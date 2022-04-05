@@ -46,6 +46,19 @@ test_data = datasets.FashionMNIST(
     transform=ToTensor(),
 )
 
+labels_map = {
+    0: "T-Shirt",
+    1: "Trouser",
+    2: "Pullover",
+    3: "Dress",
+    4: "Coat",
+    5: "Sandal",
+    6: "Shirt",
+    7: "Sneaker",
+    8: "Bag",
+    9: "Ankle Boot",
+}
+
 batch_size = 64
 
 # Create data loaders.
@@ -57,8 +70,8 @@ print(f"Feature batch shape: {train_features.size()}")
 print(f"labels batch shape: {train_labels.size()}")
 img = train_features[0].squeeze()
 label = train_labels[0]
-plt.imshow(img, cmap="gray")
-plt.show()
+# plt.imshow(img, cmap="gray")
+# plt.show()
 print(f"Label: {label}")
 
 # transform to get data into a tensors
@@ -101,36 +114,46 @@ class NeuralNetwork(nn.Module):
         logits = self.linear_relu_stack(x)
         return logits
 
-# model = NeuralNetwork().to(device)
-# print(model)
+model = NeuralNetwork().to(device)
+print(model)
 
-#tutorial section on visualizing data set
+X = torch.rand(1,28,28,device=device)
+logits = model(X)
+pred_probab = nn.Softmax(dim=1)(logits)
+y_pred = pred_probab.argmax(1)
+print(f'Predicted class; {y_pred}')
 
-labels_map = {
-    0: "T-Shirt",
-    1: "Trouser",
-    2: "Pullover",
-    3: "Dress",
-    4: "Coat",
-    5: "Sandal",
-    6: "Shirt",
-    7: "Sneaker",
-    8: "Bag",
-    9: "Ankle Boot",
-}
+#Model Layers
 
+input_image = torch.rand([3,28,28]) # get 3 28x28 images
+flatten = nn.Flatten()
+flat_image = flatten(input_image) # make each picture a continuous array
+print(flat_image.size())
 
-# figure = plt.figure(figsize=(8,8))
-# cols, rows = 3,3
-# for i in range(1, cols*rows+1):
-#     # grab a random sample
-#     sample_idx = torch.randint(len(training_data), size=(1,)).item()
-#     # grab image and label from sample
-#     img, label = training_data[sample_idx]
-#     figure.add_subplot(rows, cols, i)
-#     #names plot label from training set
-#     plt.title(labels_map[label])
-#     plt.axis("off")
-#     plt.imshow(img.squeeze(), cmap="gray")
-#
-# plt.show()
+# linear layer
+
+layer1 = nn.Linear(in_features = 28*28, out_features = 20)
+hidden1 = layer1(flat_image)
+print(hidden1.size())
+# non linear transforms
+print(f'before ReLU: {hidden1}\n\n')
+hidden1 = nn.ReLU()(hidden1)
+print(f'After ReLU: {hidden1}')
+
+# ordered container of modules?
+
+seq_modules = nn.Sequential(
+    flatten,
+    layer1,
+    nn.ReLU(),
+    nn.Linear(20,10)
+)
+input_image = torch.rand(3,28,28)
+logits = seq_modules(input_image)
+
+softmax = nn.Softmax(dim=1)
+pred_probab = softmax(logits)
+
+print(f'Model Structure: {model}\n\n')
+for name, param in model.named_parameters():
+    print(f"Layer: {name} | Size: {param.size()} | Values : {param[:2]} \n")
