@@ -1,0 +1,140 @@
+import sqlite3
+from sqlite3 import Error
+
+def create_connection(db_file):
+    """ create a db connection to sqlit db
+    
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(db_file)
+        print(sqlite3.version)
+    except Error as e:
+        print(e)
+
+    return conn
+
+def create_table(conn, create_table_sql):
+    """ create table from the create table sql statement
+    param: conn - opened database connection
+    """
+    try:
+        c = conn.cursor()
+        c.execute(create_table_sql)
+    except Error as e:
+        print(e)     
+
+def create_project(conn, project):
+
+    sql = '''INSERT INTO projects(name,begin_date,end_date)
+    VALUES(?,?,?)'''
+    cur = conn.cursor()
+    cur.execute(sql,project)
+    conn.commit()
+    return cur.lastrowid
+
+def create_task(conn, task):
+    sql = '''INSERT INTO tasks(name,priority,status_id,project_id,begin_date,end_date)
+    VALUES(?,?,?,?,?,?)'''
+    cur = conn.cursor()
+    cur.execute(sql,task)
+    conn.commit()
+    return cur.lastrowid
+
+def update_task(conn, task):
+
+    sql = '''UPDATE tasks
+            SET priority = ?,
+            begin_date = ?,
+            end_date = ?
+            WHERE id = ?'''
+
+    cur = conn.cursor()
+    cur.execute(sql, task)
+    conn.commit()
+
+def select_all_tasks(conn):
+    """
+    Query all rows in the tasks table
+    """
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM tasks")
+
+    rows = cur.fetchall()
+
+    for row in rows:
+        print(row)
+
+    return
+
+def return_full_table(conn, table):
+    """
+    Query all rows in the tasks table
+    """
+    cur = conn.cursor()
+    sql = '''SELECT * FROM projects'''
+    cur.execute(sql)
+
+    full_table = cur.fetchall()
+
+    for row in full_table:
+        print(row)
+
+    return full_table
+
+def select_task_priority(conn, priority):
+    """ Query tasks by priority"""
+
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM tasks WHERE priority=?", (priority,))
+
+    rows = cur.fetchall()
+
+    print(rows)
+
+    return
+
+
+if __name__ == '__main__':
+
+    database = r"C:\Misc-Coding\sql-test\db\pythonsqlite.db"
+
+    sql_create_projects_table = """ CREATE TABLE IF NOT EXISTS projects (
+                                        id integer PRIMARY KEY,
+                                        name text NOT NULL,
+                                        begin_date text,
+                                        end_date text
+                                    ); """
+    sql_create_tasks_table = """CREATE TABLE IF NOT EXISTS tasks (
+                                    id integer PRIMARY KEY,
+                                    name text NOT NULL,
+                                    priority integer,
+                                    status_id integer NOT NULL,
+                                    project_id integer NOT NULL,
+                                    begin_date text NOT NULL,
+                                    end_date text NOT NULL,
+                                    FOREIGN KEY (project_id) REFERENCES projects (id)
+                                );"""
+    
+    conn = create_connection(database)
+    # not used
+    # if conn is not None:
+    #     # create a new project
+    #     project = ('test project pls ignore','2022-02-02','2023-01-01')
+    #     project_id = create_project(conn, project)
+
+    #     # create a new task
+    #     task_1 = ('Analyze the requirements of the app', 1, 1, project_id, '2015-01-01', '2015-01-02')
+    #     task_2 = ('Confirm with user about the top requirements', 1, 1, project_id, '2015-01-03', '2015-01-05')
+
+    #     create_task(conn, task_1)
+    #     create_task(conn, task_2)
+    #     update_task(conn, (2, '2015-01-04', '2015-01-06', 2))
+    # else:
+    #     print("Error! cannot create the database connection.")
+
+    select_all_tasks(conn)
+    task_db = return_full_table(conn, 'projects')
+
+    select_task_priority(conn, 1)
+
